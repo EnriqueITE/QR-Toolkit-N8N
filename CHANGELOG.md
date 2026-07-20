@@ -4,6 +4,10 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Security
+
+- Bound PNG and Base64 data URL input before decoding and cap aggregate compressed image data to prevent worker memory exhaustion.
+
 ## [0.1.0] - 2026-07-19
 
 ### Added

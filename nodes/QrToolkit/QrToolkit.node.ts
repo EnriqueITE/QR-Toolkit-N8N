@@ -9,6 +9,7 @@ import { ApplicationError, NodeConnectionTypes, NodeOperationError } from 'n8n-w
 import {
 	decodeQrPng,
 	generateQrMatrix,
+	MAX_PNG_INPUT_BYTES,
 	renderPng,
 	renderSvg,
 	type ErrorCorrectionLevel,
@@ -23,6 +24,9 @@ const MAX_MARGIN = 64;
 const MAX_FILE_NAME_CHARACTERS = 128;
 const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 const WINDOWS_RESERVED_NAME_PATTERN = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i;
+const PNG_DATA_URL_PREFIX = 'data:image/png;base64,';
+const MAX_PNG_BASE64_CHARACTERS = Math.ceil(MAX_PNG_INPUT_BYTES / 3) * 4;
+const MAX_PNG_DATA_URL_CHARACTERS = PNG_DATA_URL_PREFIX.length + MAX_PNG_BASE64_CHARACTERS;
 
 export type OutputFormat = 'png' | 'svg' | 'dataUrl';
 
@@ -34,6 +38,61 @@ export interface QrToolkitOptions {
 	errorCorrectionLevel: ErrorCorrectionLevel;
 	darkColor: string;
 	lightColor: string;
+}
+
+function assertPngInputSize(byteLength: number): void {
+	if (byteLength > MAX_PNG_INPUT_BYTES) {
+		throw new ApplicationError('PNG input exceeds the 16 MiB limit.');
+	}
+}
+
+function decodedBase64Length(value: string): number {
+	const padding = value.endsWith('==') ? 2 : value.endsWith('=') ? 1 : 0;
+	return (value.length / 4) * 3 - padding;
+}
+
+function isStrictBase64(value: string): boolean {
+	if (value.length === 0 || value.length % 4 !== 0) return false;
+	let contentLength = value.length;
+	if (value.endsWith('=')) contentLength--;
+	if (value.endsWith('==')) contentLength--;
+	if (contentLength === 0) return false;
+	for (let index = 0; index < contentLength; index++) {
+		const code = value.charCodeAt(index);
+		const isDigit = code >= 48 && code <= 57;
+		const isUppercase = code >= 65 && code <= 90;
+		const isLowercase = code >= 97 && code <= 122;
+		if (!isDigit && !isUppercase && !isLowercase && code !== 43 && code !== 47) return false;
+	}
+	for (let index = contentLength; index < value.length; index++) {
+		if (value.charCodeAt(index) !== 61) return false;
+	}
+	return value.length - contentLength <= 2;
+}
+
+function decodePngDataUrl(value: string): Buffer {
+	if (value.length > MAX_PNG_DATA_URL_CHARACTERS) {
+		throw new ApplicationError('Data URL PNG exceeds the 16 MiB limit.');
+	}
+	const normalized = value.trim();
+	if (normalized.length === 0) throw new ApplicationError('Data URL must not be empty.');
+	const prefix = normalized.slice(0, PNG_DATA_URL_PREFIX.length);
+	if (prefix.toLowerCase() !== PNG_DATA_URL_PREFIX) {
+		throw new ApplicationError('Data URL must contain a Base64-encoded PNG image.');
+	}
+	const encoded = normalized.slice(PNG_DATA_URL_PREFIX.length);
+	if (
+		encoded.length > MAX_PNG_BASE64_CHARACTERS ||
+		(encoded.length % 4 === 0 && decodedBase64Length(encoded) > MAX_PNG_INPUT_BYTES)
+	) {
+		throw new ApplicationError('Data URL PNG exceeds the 16 MiB limit.');
+	}
+	if (!isStrictBase64(encoded)) {
+		throw new ApplicationError('Data URL must contain a Base64-encoded PNG image.');
+	}
+	const image = Buffer.from(encoded, 'base64');
+	if (image.length === 0) throw new ApplicationError('Data URL PNG must not be empty.');
+	return image;
 }
 
 interface RawQrToolkitOptions {
@@ -477,20 +536,14 @@ export class QrToolkit implements INodeType {
 						}
 						const propertyName = propertyValue.trim();
 						image = await this.helpers.getBinaryDataBuffer(itemIndex, propertyName);
+						assertPngInputSize(image.length);
 						sourceDescription = propertyName;
 					} else if (inputSource === 'dataUrl') {
 						const dataUrlValue = this.getNodeParameter('inputDataUrl', itemIndex);
-						if (typeof dataUrlValue !== 'string' || dataUrlValue.trim().length === 0) {
+						if (typeof dataUrlValue !== 'string') {
 							throw new ApplicationError('Data URL must not be empty.');
 						}
-						const match = /^data:image\/png;base64,([A-Za-z0-9+/]+={0,2})$/i.exec(
-							dataUrlValue.trim(),
-						);
-						if (match === null) {
-							throw new ApplicationError('Data URL must contain a Base64-encoded PNG image.');
-						}
-						image = Buffer.from(match[1]!, 'base64');
-						if (image.length === 0) throw new ApplicationError('Data URL PNG must not be empty.');
+						image = decodePngDataUrl(dataUrlValue);
 						sourceDescription = 'dataUrl';
 					} else {
 						throw new ApplicationError('Input Source must be Binary Property or Base64 Data URL.');

@@ -37,6 +37,8 @@ const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const ALPHANUMERIC_CHARACTERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:';
 const MAX_IMAGE_DIMENSION = 4096;
 const MAX_IMAGE_PIXELS = 16_777_216;
+export const MAX_PNG_INPUT_BYTES = 16 * 1024 * 1024;
+export const MAX_PNG_COMPRESSED_BYTES = 8 * 1024 * 1024;
 
 function paethPredictor(left: number, above: number, upperLeft: number): number {
 	const prediction = left + above - upperLeft;
@@ -65,6 +67,9 @@ function rgbToGray(red: number, green: number, blue: number): number {
 }
 
 async function decodePng(buffer: Buffer): Promise<GrayImage> {
+	if (buffer.length > MAX_PNG_INPUT_BYTES) {
+		throw new Error('PNG input exceeds the 16 MiB limit.');
+	}
 	if (buffer.length < PNG_SIGNATURE.length || !buffer.subarray(0, 8).equals(PNG_SIGNATURE)) {
 		throw new Error('QR reader accepts PNG images only.');
 	}
@@ -78,6 +83,7 @@ async function decodePng(buffer: Buffer): Promise<GrayImage> {
 	let palette: Buffer | undefined;
 	let transparency: Buffer | undefined;
 	const compressedParts: Buffer[] = [];
+	let compressedLength = 0;
 
 	while (offset + 12 <= buffer.length) {
 		const length = buffer.readUInt32BE(offset);
@@ -100,7 +106,11 @@ async function decodePng(buffer: Buffer): Promise<GrayImage> {
 		} else if (type === 'tRNS') {
 			transparency = Buffer.from(data);
 		} else if (type === 'IDAT') {
-			compressedParts.push(Buffer.from(data));
+			if (length > MAX_PNG_COMPRESSED_BYTES - compressedLength) {
+				throw new Error('PNG compressed image data exceeds the 8 MiB limit.');
+			}
+			compressedParts.push(data);
+			compressedLength += length;
 		} else if (type === 'IEND') {
 			break;
 		}
@@ -136,7 +146,12 @@ async function decodePng(buffer: Buffer): Promise<GrayImage> {
 	const rowLength = Math.ceil((width * bitsPerPixel) / 8);
 	const filterBytesPerPixel = Math.max(1, Math.ceil(bitsPerPixel / 8));
 	const expectedInflatedLength = (rowLength + 1) * height;
-	const compressed = new Uint8Array(Buffer.concat(compressedParts));
+	const compressedBuffer = Buffer.concat(compressedParts, compressedLength);
+	const compressed = new Uint8Array(
+		compressedBuffer.buffer,
+		compressedBuffer.byteOffset,
+		compressedBuffer.byteLength,
+	);
 	const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate'));
 	const reader = stream.getReader();
 	const inflated = new Uint8Array(expectedInflatedLength);

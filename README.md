@@ -128,6 +128,7 @@ Every output includes n8n item-linking information so downstream expressions res
 ### Reading
 
 - Input must be a PNG. JPEG, SVG, animated or interlaced PNG, camera perspective, and arbitrary-angle images are not supported.
+- PNG input is limited to 16 MiB, and the combined compressed image-data chunks are limited to 8 MiB.
 - Dimensions are limited to 4096 by 4096 pixels and 16,777,216 total pixels.
 - Supported PNG color types are grayscale, RGB, indexed, grayscale with alpha, and RGBA at supported 1, 2, 4, or 8-bit depths.
 - The reader handles clean, axis-aligned QR codes rotated in quarter turns and normal or inverted colors.
@@ -194,6 +195,6 @@ Releases are published from a vX.Y.Z Git tag by GitHub Actions using npm Trusted
 
 MIT. See [LICENSE.md](LICENSE.md).
 
-Developed by [Enrique Serrano](https://enriqueite.com/) and maintained by [CYBERACE](https://cyberace.tech/).
+Developed by [Enrique Serrano Aparicio](https://enriqueite.com/) and maintained by [CYBERACE](https://cyberace.tech/).
 
 > QR Toolkit is free and open source. If this node saves you time, you can support its development on [Buy Me a Coffee](https://buymeacoffee.com/enriqueite).

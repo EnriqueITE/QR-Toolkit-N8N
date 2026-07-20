@@ -10,6 +10,16 @@ import {
 	type ErrorCorrectionLevel,
 	type QrMatrix,
 } from '../qr';
+import { MAX_PNG_COMPRESSED_BYTES, MAX_PNG_INPUT_BYTES } from '../qr/decoder';
+
+const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+function chunk(type: string, data: Buffer): Buffer {
+	const header = Buffer.alloc(8);
+	header.writeUInt32BE(data.length, 0);
+	header.write(type, 4, 4, 'ascii');
+	return Buffer.concat([header, data, Buffer.alloc(4)]);
+}
 
 function render(matrix: QrMatrix, darkColor = '#000000', lightColor = '#FFFFFF'): Buffer {
 	return renderPng(matrix, {
@@ -81,6 +91,33 @@ describe('QR PNG decoder', () => {
 		const blank = new PNG({ width: 128, height: 128 });
 		blank.data.fill(255);
 		await expect(decodeQrPng(PNG.sync.write(blank))).rejects.toThrow('enough contrast');
+	});
+
+	it('rejects a PNG above the source-size limit before parsing', async () => {
+		const oversized = Buffer.alloc(MAX_PNG_INPUT_BYTES + 1);
+		PNG_SIGNATURE.copy(oversized);
+
+		await expect(decodeQrPng(oversized)).rejects.toThrow('PNG input exceeds the 16 MiB limit');
+	});
+
+	it('rejects aggregate IDAT data above the compressed-data budget before concatenation', async () => {
+		const ihdr = Buffer.alloc(13);
+		ihdr.writeUInt32BE(1, 0);
+		ihdr.writeUInt32BE(1, 4);
+		ihdr[8] = 8;
+		const first = Buffer.alloc(MAX_PNG_COMPRESSED_BYTES / 2);
+		const second = Buffer.alloc(MAX_PNG_COMPRESSED_BYTES / 2 + 1);
+		const png = Buffer.concat([
+			PNG_SIGNATURE,
+			chunk('IHDR', ihdr),
+			chunk('IDAT', first),
+			chunk('IDAT', second),
+			chunk('IEND', Buffer.alloc(0)),
+		]);
+
+		await expect(decodeQrPng(png)).rejects.toThrow(
+			'PNG compressed image data exceeds the 8 MiB limit',
+		);
 	});
 
 	it('reads longer content and reports the selected version', async () => {

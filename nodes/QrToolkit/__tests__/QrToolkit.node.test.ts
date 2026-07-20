@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const qrMocks = vi.hoisted(() => ({
 	decodeQrPng: vi.fn(),
 	generateQrMatrix: vi.fn(),
+	MAX_PNG_INPUT_BYTES: 16 * 1024 * 1024,
 	renderPng: vi.fn(),
 	renderSvg: vi.fn(),
 }));
@@ -14,6 +15,7 @@ const qrMocks = vi.hoisted(() => ({
 vi.mock('../qr', () => qrMocks);
 
 import { QrToolkit, sanitizeFileName, validateOptions } from '../QrToolkit.node';
+import { MAX_PNG_INPUT_BYTES } from '../qr/decoder';
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const TEST_MATRIX = {
@@ -299,6 +301,88 @@ describe('QR Toolkit execution', () => {
 			qrReadFrom: 'dataUrl',
 		});
 		expect(result.binary).toBeUndefined();
+	});
+
+	it('accepts a binary PNG at the input-size limit', async () => {
+		const image = Buffer.alloc(MAX_PNG_INPUT_BYTES);
+		const { context } = createContext([{ json: {} }], {
+			getBinaryDataBuffer: async () => image,
+			parameters: {
+				operation: 'readQrCode',
+				inputSource: 'binary',
+			},
+		});
+
+		await expect(executeWith(context)).resolves.toHaveLength(1);
+		expect(qrMocks.decodeQrPng.mock.calls[0]?.[0]).toBe(image);
+	});
+
+	it('rejects an oversized binary PNG before invoking the decoder', async () => {
+		const { context } = createContext([{ json: {} }], {
+			getBinaryDataBuffer: async () => Buffer.alloc(MAX_PNG_INPUT_BYTES + 1),
+			parameters: {
+				operation: 'readQrCode',
+				inputSource: 'binary',
+			},
+		});
+
+		await expect(executeWith(context)).rejects.toThrow('PNG input exceeds the 16 MiB limit');
+		expect(qrMocks.decodeQrPng).not.toHaveBeenCalled();
+	});
+
+	it('accepts a Base64 PNG at the input-size limit', async () => {
+		const image = Buffer.alloc(MAX_PNG_INPUT_BYTES);
+		const dataUrl = `data:image/png;base64,${image.toString('base64')}`;
+		const { context } = createContext([{ json: {} }], {
+			parameters: {
+				operation: 'readQrCode',
+				inputSource: 'dataUrl',
+				inputDataUrl: dataUrl,
+			},
+		});
+
+		await expect(executeWith(context)).resolves.toHaveLength(1);
+		const decodedInput = qrMocks.decodeQrPng.mock.calls[0]?.[0] as Buffer;
+		expect(decodedInput).toBeInstanceOf(Buffer);
+		expect(decodedInput.length).toBe(MAX_PNG_INPUT_BYTES);
+		expect(decodedInput.subarray(0, 8)).toEqual(image.subarray(0, 8));
+	});
+
+	it('rejects an oversized Base64 PNG before decoding it', async () => {
+		const encoded = 'A'.repeat(Math.ceil((MAX_PNG_INPUT_BYTES + 1) / 3) * 4);
+		const { context } = createContext([{ json: {} }], {
+			parameters: {
+				operation: 'readQrCode',
+				inputSource: 'dataUrl',
+				inputDataUrl: `data:image/png;base64,${encoded}`,
+			},
+		});
+
+		await expect(executeWith(context)).rejects.toThrow('Data URL PNG exceeds the 16 MiB limit');
+		expect(qrMocks.decodeQrPng).not.toHaveBeenCalled();
+	});
+
+	it('continues to the next item after rejecting an oversized binary PNG', async () => {
+		const items: INodeExecutionData[] = [{ json: { id: 1 } }, { json: { id: 2 } }];
+		const { context } = createContext(items, {
+			continueOnFail: true,
+			getBinaryDataBuffer: async (itemIndex) =>
+				itemIndex === 0 ? Buffer.alloc(MAX_PNG_INPUT_BYTES + 1) : PNG_SIGNATURE,
+			parameters: {
+				operation: 'readQrCode',
+				inputSource: 'binary',
+			},
+		});
+
+		const [results] = await executeWith(context);
+
+		expect(results[0]).toMatchObject({
+			json: { id: 1 },
+			pairedItem: { item: 0 },
+			error: expect.any(NodeOperationError),
+		});
+		expect(results[1]?.json).toMatchObject({ id: 2, qrContent: 'decoded content' });
+		expect(qrMocks.decodeQrPng).toHaveBeenCalledTimes(1);
 	});
 
 	it('rejects malformed read inputs and respects Continue On Fail', async () => {

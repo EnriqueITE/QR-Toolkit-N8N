@@ -1,7 +1,7 @@
 {
-	"name": "n8n-nodes-qr-toolkit",
+	"name": "@cyberace/n8n-nodes-qr",
 	"version": "0.1.0",
-	"description": "Generate PNG, SVG, and Base64 QR codes locally in n8n workflows.",
+	"description": "Generate and read PNG QR codes locally in n8n workflows.",
 	"license": "MIT",
 	"homepage": "https://github.com/EnriqueITE/QR-Toolkit#readme",
 	"keywords": [
@@ -12,8 +12,8 @@
 		"automation"
 	],
 	"author": {
-		"name": "CYBERACE",
-		"url": "https://cyberace.tech/",
+		"name": "Enrique Serrano",
+		"url": "https://enriqueite.com",
 		"email": "hello@enriqueite.com"
 	},
 	"repository": {
@@ -23,7 +23,6 @@
 	"bugs": {
 		"url": "https://github.com/EnriqueITE/QR-Toolkit/issues"
 	},
-	"funding": "https://buymeacoffee.com/enriqueite",
 	"engines": {
 		"node": ">=22.0.0"
 	},
@@ -74,5 +73,9 @@
 	},
 	"peerDependencies": {
 		"n8n-workflow": "*"
+	},
+	"funding": {
+		"type": "buymeacoffee",
+		"url": "https://buymeacoffee.com/enriqueite"
 	}
 }

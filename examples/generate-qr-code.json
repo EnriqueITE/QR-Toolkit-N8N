@@ -44,7 +44,7 @@
 			},
 			"id": "23b98a7a-704a-40cc-b92d-f948c9362dd0",
 			"name": "Generate QR Code",
-			"type": "n8n-nodes-qr-toolkit.qrToolkit",
+			"type": "@cyberace/n8n-nodes-qr.qrToolkit",
 			"typeVersion": 1,
 			"position": [500, 0]
 		}

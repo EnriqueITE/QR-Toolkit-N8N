@@ -15,6 +15,9 @@ All notable changes to this project are documented in this file. The format is b
 - Configurable width, margin, dark color, light color, binary property name, and file name.
 - Native n8n binary metadata, item linking, expression support, and sequential multi-item processing.
 - Automated validation and provenance-backed npm publishing workflows.
+- Local PNG QR decoding with binary-property and Base64 data URL inputs.
+- QR reading for numeric, alphanumeric, and byte payloads, including UTF-8 ECI data.
+- Scoped npm package identity under `@cyberace/n8n-nodes-qr`.
 
 [Unreleased]: https://github.com/EnriqueITE/QR-Toolkit/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/EnriqueITE/QR-Toolkit/releases/tag/v0.1.0

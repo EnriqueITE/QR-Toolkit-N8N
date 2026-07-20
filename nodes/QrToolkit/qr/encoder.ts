@@ -10,7 +10,7 @@ const MAX_VERSION = 40;
 
 // Tables from ISO/IEC 18004. Index zero is deliberately unused so the
 // remaining indices are QR version numbers.
-const ECC_CODEWORDS_PER_BLOCK: Readonly<Record<ErrorCorrectionLevel, readonly number[]>> = {
+export const ECC_CODEWORDS_PER_BLOCK: Readonly<Record<ErrorCorrectionLevel, readonly number[]>> = {
 	L: [
 		-1, 7, 10, 15, 20, 26, 18, 20, 24, 30, 18, 20, 24, 26, 30, 22, 24, 28, 30, 28, 28, 28, 28, 30,
 		30, 26, 28, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
@@ -29,7 +29,9 @@ const ECC_CODEWORDS_PER_BLOCK: Readonly<Record<ErrorCorrectionLevel, readonly nu
 	],
 };
 
-const NUM_ERROR_CORRECTION_BLOCKS: Readonly<Record<ErrorCorrectionLevel, readonly number[]>> = {
+export const NUM_ERROR_CORRECTION_BLOCKS: Readonly<
+	Record<ErrorCorrectionLevel, readonly number[]>
+> = {
 	L: [
 		-1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 4, 4, 4, 4, 4, 6, 6, 6, 6, 7, 8, 8, 9, 9, 10, 12, 12, 12, 13, 14,
 		15, 16, 17, 18, 19, 19, 20, 21, 22, 24, 25,
@@ -68,7 +70,7 @@ class BitBuffer {
 	}
 }
 
-function getNumRawDataModules(version: number): number {
+export function getNumRawDataModules(version: number): number {
 	let result = (16 * version + 128) * version + 64;
 	if (version >= 2) {
 		const alignmentPatternCount = Math.floor(version / 7) + 2;
@@ -160,7 +162,7 @@ function reedSolomonMultiply(left: number, right: number): number {
 	return result;
 }
 
-function makeReedSolomonDivisor(degree: number): number[] {
+export function makeReedSolomonDivisor(degree: number): number[] {
 	const result = new Array<number>(degree).fill(0);
 	result[degree - 1] = 1;
 	let root = 1;
@@ -174,7 +176,10 @@ function makeReedSolomonDivisor(degree: number): number[] {
 	return result;
 }
 
-function makeReedSolomonRemainder(data: readonly number[], divisor: readonly number[]): number[] {
+export function makeReedSolomonRemainder(
+	data: readonly number[],
+	divisor: readonly number[],
+): number[] {
 	const result = new Array<number>(divisor.length).fill(0);
 	for (const value of data) {
 		const factor = value ^ result[0]!;

@@ -5,6 +5,7 @@ import { NodeOperationError } from 'n8n-workflow';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const qrMocks = vi.hoisted(() => ({
+	decodeQrPng: vi.fn(),
 	generateQrMatrix: vi.fn(),
 	renderPng: vi.fn(),
 	renderSvg: vi.fn(),
@@ -23,6 +24,7 @@ const TEST_MATRIX = {
 type ParameterResolver = unknown | ((itemIndex: number) => unknown);
 
 interface MockContextOptions {
+	getBinaryDataBuffer?: (itemIndex: number, propertyName: string) => Promise<Buffer>;
 	continueOnFail?: boolean;
 	parameters?: Record<string, ParameterResolver>;
 	prepareBinaryData?: (
@@ -50,6 +52,12 @@ function createContext(
 	options: MockContextOptions = {},
 ) {
 	const parameters = { ...DEFAULT_PARAMETERS, ...options.parameters };
+	const getBinaryDataBuffer = vi.fn(
+		options.getBinaryDataBuffer ??
+			(async () => {
+				return PNG_SIGNATURE;
+			}),
+	);
 	const prepareBinaryData = vi.fn(
 		options.prepareBinaryData ??
 			(async (data: Buffer, fileName: string, mimeType: string) => ({
@@ -65,7 +73,7 @@ function createContext(
 		getNode: vi.fn(() => ({
 			id: 'test-node',
 			name: 'QR Toolkit',
-			type: 'n8n-nodes-qr-toolkit.qrToolkit',
+			type: '@cyberace/n8n-nodes-qr.qrToolkit',
 			typeVersion: 1,
 			position: [0, 0],
 			parameters: {},
@@ -81,12 +89,14 @@ function createContext(
 				: parameter;
 		}),
 		helpers: {
+			getBinaryDataBuffer,
 			prepareBinaryData,
 		},
 	};
 
 	return {
 		context: context as unknown as IExecuteFunctions,
+		getBinaryDataBuffer,
 		getNodeParameter: context.getNodeParameter,
 		prepareBinaryData,
 	};
@@ -98,6 +108,12 @@ async function executeWith(context: IExecuteFunctions): Promise<INodeExecutionDa
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	qrMocks.decodeQrPng.mockResolvedValue({
+		content: 'decoded content',
+		version: 4,
+		errorCorrectionLevel: 'Q',
+		mask: 6,
+	});
 	qrMocks.generateQrMatrix.mockReturnValue(TEST_MATRIX);
 	qrMocks.renderPng.mockReturnValue(PNG_SIGNATURE);
 	qrMocks.renderSvg.mockReturnValue(
@@ -221,6 +237,88 @@ describe('QR Toolkit execution', () => {
 		expect(result.pairedItem).toEqual({ item: 0 });
 		expect(prepareBinaryData).not.toHaveBeenCalled();
 		expect(qrMocks.renderSvg).not.toHaveBeenCalled();
+	});
+
+	it('reads a QR from binary data while preserving the input item', async () => {
+		const input: INodeExecutionData[] = [
+			{
+				json: { id: 7 },
+				binary: {
+					photo: {
+						data: PNG_SIGNATURE.toString('base64'),
+						mimeType: 'image/png',
+						fileName: 'input.png',
+					},
+				},
+			},
+		];
+		const original = structuredClone(input);
+		const { context, getBinaryDataBuffer } = createContext(input, {
+			parameters: {
+				operation: 'readQrCode',
+				inputSource: 'binary',
+				binaryPropertyName: 'photo',
+			},
+		});
+
+		const [[result]] = await executeWith(context);
+
+		expect(input).toEqual(original);
+		expect(getBinaryDataBuffer).toHaveBeenCalledWith(0, 'photo');
+		expect(qrMocks.decodeQrPng).toHaveBeenCalledWith(PNG_SIGNATURE);
+		expect(result.json).toMatchObject({
+			id: 7,
+			qrContent: 'decoded content',
+			qrVersion: 4,
+			qrErrorCorrectionLevel: 'Q',
+			qrMask: 6,
+			qrReadFrom: 'photo',
+		});
+		expect(result.json.qrReadAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+		expect(result.binary).toEqual(input[0].binary);
+		expect(result.pairedItem).toEqual({ item: 0 });
+	});
+
+	it('reads a QR from a PNG data URL without creating binary data', async () => {
+		const dataUrl = 'data:image/png;base64,' + PNG_SIGNATURE.toString('base64');
+		const { context, getBinaryDataBuffer } = createContext([{ json: { dataUrl } }], {
+			parameters: {
+				operation: 'readQrCode',
+				inputSource: 'dataUrl',
+				inputDataUrl: dataUrl,
+			},
+		});
+
+		const [[result]] = await executeWith(context);
+
+		expect(qrMocks.decodeQrPng).toHaveBeenCalledWith(PNG_SIGNATURE);
+		expect(getBinaryDataBuffer).not.toHaveBeenCalled();
+		expect(result.json).toMatchObject({
+			dataUrl,
+			qrContent: 'decoded content',
+			qrReadFrom: 'dataUrl',
+		});
+		expect(result.binary).toBeUndefined();
+	});
+
+	it('rejects malformed read inputs and respects Continue On Fail', async () => {
+		const { context } = createContext([{ json: { keep: true } }], {
+			continueOnFail: true,
+			parameters: {
+				operation: 'readQrCode',
+				inputSource: 'dataUrl',
+				inputDataUrl: 'data:image/jpeg;base64,AAAA',
+			},
+		});
+
+		const [[result]] = await executeWith(context);
+
+		expect(result).toMatchObject({
+			json: { keep: true },
+			pairedItem: { item: 0 },
+			error: expect.any(NodeOperationError),
+		});
+		expect(qrMocks.decodeQrPng).not.toHaveBeenCalled();
 	});
 
 	it('passes custom colors and each error correction level to the engine', async () => {

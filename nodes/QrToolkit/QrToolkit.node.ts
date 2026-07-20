@@ -7,6 +7,7 @@ import type {
 import { ApplicationError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import {
+	decodeQrPng,
 	generateQrMatrix,
 	renderPng,
 	renderSvg,
@@ -179,7 +180,7 @@ function toError(error: unknown): Error {
 	}
 
 	return new ApplicationError(
-		typeof error === 'string' ? error : 'An unknown QR generation error occurred.',
+		typeof error === 'string' ? error : 'An unknown QR Toolkit error occurred.',
 	);
 }
 
@@ -191,7 +192,7 @@ export class QrToolkit implements INodeType {
 		icon: { light: 'file:qrToolkit.svg', dark: 'file:qrToolkit.dark.svg' },
 		group: ['transform'],
 		version: 1,
-		description: 'Generate QR codes locally as PNG, SVG, or Base64 data URLs',
+		description: 'Generate and read QR codes locally without external services',
 		defaults: {
 			name: 'QR Toolkit',
 		},
@@ -211,6 +212,12 @@ export class QrToolkit implements INodeType {
 						description: 'Generate a QR code from text or a URL',
 						action: 'Generate a QR code',
 					},
+					{
+						name: 'Read QR Code',
+						value: 'readQrCode',
+						description: 'Read content from an axis-aligned PNG QR code',
+						action: 'Read a QR code',
+					},
 				],
 				default: 'generateQrCode',
 			},
@@ -224,6 +231,11 @@ export class QrToolkit implements INodeType {
 				default: '',
 				required: true,
 				placeholder: 'https://example.com',
+				displayOptions: {
+					show: {
+						operation: ['generateQrCode'],
+					},
+				},
 				description: 'Text or URL to encode in the QR code',
 			},
 			{
@@ -248,6 +260,11 @@ export class QrToolkit implements INodeType {
 					},
 				],
 				default: 'png',
+				displayOptions: {
+					show: {
+						operation: ['generateQrCode'],
+					},
+				},
 				description: 'How to return the generated QR code',
 			},
 			{
@@ -260,6 +277,11 @@ export class QrToolkit implements INodeType {
 					numberPrecision: 0,
 				},
 				default: 512,
+				displayOptions: {
+					show: {
+						operation: ['generateQrCode'],
+					},
+				},
 				description: 'Output image width in pixels',
 			},
 			{
@@ -272,6 +294,11 @@ export class QrToolkit implements INodeType {
 					numberPrecision: 0,
 				},
 				default: 4,
+				displayOptions: {
+					show: {
+						operation: ['generateQrCode'],
+					},
+				},
 				description: 'Quiet-zone width in QR modules',
 			},
 			{
@@ -301,6 +328,11 @@ export class QrToolkit implements INodeType {
 					},
 				],
 				default: 'M',
+				displayOptions: {
+					show: {
+						operation: ['generateQrCode'],
+					},
+				},
 				description: 'Amount of damage the QR code can recover from',
 			},
 			{
@@ -308,6 +340,11 @@ export class QrToolkit implements INodeType {
 				name: 'darkColor',
 				type: 'color',
 				default: '#000000',
+				displayOptions: {
+					show: {
+						operation: ['generateQrCode'],
+					},
+				},
 				description: 'Color used for dark QR modules in #RRGGBB format',
 			},
 			{
@@ -315,6 +352,11 @@ export class QrToolkit implements INodeType {
 				name: 'lightColor',
 				type: 'color',
 				default: '#FFFFFF',
+				displayOptions: {
+					show: {
+						operation: ['generateQrCode'],
+					},
+				},
 				description: 'Color used for the QR background in #RRGGBB format',
 			},
 			{
@@ -325,6 +367,7 @@ export class QrToolkit implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
+						operation: ['generateQrCode'],
 						outputFormat: ['png', 'svg'],
 					},
 				},
@@ -337,6 +380,7 @@ export class QrToolkit implements INodeType {
 				default: 'qr-code.png',
 				displayOptions: {
 					show: {
+						operation: ['generateQrCode'],
 						outputFormat: ['png'],
 					},
 				},
@@ -349,10 +393,66 @@ export class QrToolkit implements INodeType {
 				default: 'qr-code.svg',
 				displayOptions: {
 					show: {
+						operation: ['generateQrCode'],
 						outputFormat: ['svg'],
 					},
 				},
 				description: 'File name for the generated SVG image',
+			},
+			{
+				displayName: 'Input Source',
+				name: 'inputSource',
+				type: 'options',
+				options: [
+					{
+						name: 'Base64 Data URL',
+						value: 'dataUrl',
+						description: 'Read a PNG data URL from a parameter or expression',
+					},
+					{
+						name: 'Binary Property',
+						value: 'binary',
+						description: 'Read a PNG from an incoming binary property',
+					},
+				],
+				default: 'binary',
+				displayOptions: {
+					show: {
+						operation: ['readQrCode'],
+					},
+				},
+				description: 'Where to read the PNG QR image from',
+			},
+			{
+				displayName: 'Binary Property Name',
+				name: 'binaryPropertyName',
+				type: 'string',
+				default: 'data',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['readQrCode'],
+						inputSource: ['binary'],
+					},
+				},
+				description: 'Name of the incoming binary property containing the PNG image',
+			},
+			{
+				displayName: 'Data URL',
+				name: 'inputDataUrl',
+				type: 'string',
+				typeOptions: {
+					rows: 3,
+				},
+				default: '={{ $json.dataUrl }}',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['readQrCode'],
+						inputSource: ['dataUrl'],
+					},
+				},
+				description: 'PNG data URL to decode',
 			},
 		],
 	};
@@ -365,8 +465,52 @@ export class QrToolkit implements INodeType {
 			try {
 				const operation = this.getNodeParameter('operation', itemIndex, 'generateQrCode');
 
+				if (operation === 'readQrCode') {
+					const inputSource = this.getNodeParameter('inputSource', itemIndex, 'binary');
+					let image: Buffer;
+					let sourceDescription: string;
+
+					if (inputSource === 'binary') {
+						const propertyValue = this.getNodeParameter('binaryPropertyName', itemIndex, 'data');
+						if (typeof propertyValue !== 'string' || propertyValue.trim().length === 0) {
+							throw new ApplicationError('Binary Property Name must not be empty.');
+						}
+						const propertyName = propertyValue.trim();
+						image = await this.helpers.getBinaryDataBuffer(itemIndex, propertyName);
+						sourceDescription = propertyName;
+					} else if (inputSource === 'dataUrl') {
+						const dataUrlValue = this.getNodeParameter('inputDataUrl', itemIndex);
+						if (typeof dataUrlValue !== 'string' || dataUrlValue.trim().length === 0) {
+							throw new ApplicationError('Data URL must not be empty.');
+						}
+						const match = /^data:image\/png;base64,([A-Za-z0-9+/]+={0,2})$/i.exec(
+							dataUrlValue.trim(),
+						);
+						if (match === null) {
+							throw new ApplicationError('Data URL must contain a Base64-encoded PNG image.');
+						}
+						image = Buffer.from(match[1]!, 'base64');
+						if (image.length === 0) throw new ApplicationError('Data URL PNG must not be empty.');
+						sourceDescription = 'dataUrl';
+					} else {
+						throw new ApplicationError('Input Source must be Binary Property or Base64 Data URL.');
+					}
+
+					const decoded = await decodeQrPng(image);
+					const outputItem = cloneInputItem(inputItems[itemIndex]);
+					outputItem.pairedItem = { item: itemIndex };
+					outputItem.json.qrContent = decoded.content;
+					outputItem.json.qrVersion = decoded.version;
+					outputItem.json.qrErrorCorrectionLevel = decoded.errorCorrectionLevel;
+					outputItem.json.qrMask = decoded.mask;
+					outputItem.json.qrReadFrom = sourceDescription;
+					outputItem.json.qrReadAt = new Date().toISOString();
+					outputItems.push(outputItem);
+					continue;
+				}
+
 				if (operation !== 'generateQrCode') {
-					throw new ApplicationError('Operation must be Generate QR Code.');
+					throw new ApplicationError('Operation must be Generate QR Code or Read QR Code.');
 				}
 
 				const options = validateOptions({
@@ -393,7 +537,7 @@ export class QrToolkit implements INodeType {
 
 				if (options.outputFormat === 'dataUrl') {
 					const png = renderPng(matrix, renderOptions);
-					outputItem.json.dataUrl = `data:image/png;base64,${png.toString('base64')}`;
+					outputItem.json.dataUrl = 'data:image/png;base64,' + png.toString('base64');
 					outputItems.push(outputItem);
 					continue;
 				}
@@ -405,7 +549,7 @@ export class QrToolkit implements INodeType {
 				const binaryPropertyName = binaryPropertyValue.trim();
 				const extension = options.outputFormat;
 				const fileName = sanitizeFileName(
-					this.getNodeParameter('fileName', itemIndex, `qr-code.${extension}`),
+					this.getNodeParameter('fileName', itemIndex, 'qr-code.' + extension),
 					extension,
 				);
 				const mimeType = options.outputFormat === 'png' ? 'image/png' : 'image/svg+xml';

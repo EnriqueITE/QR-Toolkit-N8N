@@ -25,8 +25,8 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
-      - name: Use npm 11.5.1
-        run: npm install --global npm@11.5.1
+      - name: Use npm 11.6.1
+        run: npm install --global npm@11.6.1
 
       - name: Validate release tag
         shell: bash

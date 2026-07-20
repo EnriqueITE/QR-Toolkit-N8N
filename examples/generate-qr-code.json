@@ -1,0 +1,86 @@
+{
+	"name": "QR Toolkit - Generate a PNG QR Code",
+	"nodes": [
+		{
+			"parameters": {},
+			"id": "0e0fe52f-fb2f-4cf0-91ed-f69ce560b4df",
+			"name": "When clicking Execute workflow",
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [0, 0]
+		},
+		{
+			"parameters": {
+				"assignments": {
+					"assignments": [
+						{
+							"id": "db2880fb-c50b-4675-af42-73680f7a28d1",
+							"name": "content",
+							"value": "https://example.com",
+							"type": "string"
+						}
+					]
+				},
+				"options": {}
+			},
+			"id": "6ce3c14d-9f73-4b06-a131-6db8d3a4abcb",
+			"name": "Set QR Content",
+			"type": "n8n-nodes-base.set",
+			"typeVersion": 3.4,
+			"position": [240, 0]
+		},
+		{
+			"parameters": {
+				"operation": "generateQrCode",
+				"content": "={{ $json.content }}",
+				"outputFormat": "png",
+				"width": 512,
+				"margin": 4,
+				"errorCorrectionLevel": "M",
+				"darkColor": "#000000",
+				"lightColor": "#FFFFFF",
+				"binaryPropertyName": "data",
+				"fileName": "example-qr.png"
+			},
+			"id": "23b98a7a-704a-40cc-b92d-f948c9362dd0",
+			"name": "Generate QR Code",
+			"type": "n8n-nodes-qr-toolkit.qrToolkit",
+			"typeVersion": 1,
+			"position": [500, 0]
+		}
+	],
+	"pinData": {},
+	"connections": {
+		"When clicking Execute workflow": {
+			"main": [
+				[
+					{
+						"node": "Set QR Content",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Set QR Content": {
+			"main": [
+				[
+					{
+						"node": "Generate QR Code",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"active": false,
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"versionId": "ef6b90f7-ec3a-4364-bdcc-b7e42404aab8",
+	"meta": {
+		"templateCredsSetupCompleted": true
+	},
+	"tags": []
+}

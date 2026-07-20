@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"description": "Generate and read PNG QR codes locally in n8n workflows.",
 	"license": "MIT",
-	"homepage": "https://github.com/EnriqueITE/QR-Toolkit#readme",
+	"homepage": "https://github.com/EnriqueITE/QR-Toolkit-N8N#readme",
 	"keywords": [
 		"n8n-community-node-package",
 		"n8n",
@@ -18,10 +18,10 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/EnriqueITE/QR-Toolkit.git"
+		"url": "git+https://github.com/EnriqueITE/QR-Toolkit-N8N.git"
 	},
 	"bugs": {
-		"url": "https://github.com/EnriqueITE/QR-Toolkit/issues"
+		"url": "https://github.com/EnriqueITE/QR-Toolkit-N8N/issues"
 	},
 	"engines": {
 		"node": ">=22.0.0"

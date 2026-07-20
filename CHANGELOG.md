@@ -23,5 +23,5 @@ All notable changes to this project are documented in this file. The format is b
 - QR reading for numeric, alphanumeric, and byte payloads, including UTF-8 ECI data.
 - Scoped npm package identity under `@cyberace/n8n-nodes-qr`.
 
-[Unreleased]: https://github.com/EnriqueITE/QR-Toolkit/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/EnriqueITE/QR-Toolkit/releases/tag/v0.1.0
+[Unreleased]: https://github.com/EnriqueITE/QR-Toolkit-N8N/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/EnriqueITE/QR-Toolkit-N8N/releases/tag/v0.1.0

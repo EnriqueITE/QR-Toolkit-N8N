@@ -12,10 +12,10 @@ const qrMocks = vi.hoisted(() => ({
 	renderSvg: vi.fn(),
 }));
 
-vi.mock('../qr', () => qrMocks);
+vi.mock('../nodes/QrToolkit/qr', () => qrMocks);
 
-import { QrToolkit, sanitizeFileName, validateOptions } from '../QrToolkit.node';
-import { MAX_PNG_INPUT_BYTES } from '../qr/decoder';
+import { QrToolkit, sanitizeFileName, validateOptions } from '../nodes/QrToolkit/QrToolkit.node';
+import { MAX_PNG_INPUT_BYTES } from '../nodes/QrToolkit/qr/decoder';
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const TEST_MATRIX = {

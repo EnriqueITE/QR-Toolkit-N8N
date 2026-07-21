@@ -5,6 +5,6 @@
 		"noEmit": true,
 		"types": ["node", "vitest/globals"]
 	},
-	"include": ["nodes/**/*", "vitest.config.ts"],
+	"include": ["nodes/**/*", "tests/**/*", "vitest.config.ts"],
 	"exclude": ["dist", "node_modules"]
 }

@@ -4,7 +4,12 @@ import jsQR from 'jsqr';
 import { PNG } from 'pngjs';
 import { describe, expect, it } from 'vitest';
 
-import { generateQrMatrix, renderPng, renderSvg, type ErrorCorrectionLevel } from '../qr';
+import {
+	generateQrMatrix,
+	renderPng,
+	renderSvg,
+	type ErrorCorrectionLevel,
+} from '../nodes/QrToolkit/qr';
 
 const BLACK_AND_WHITE = {
 	darkColor: '#000000',

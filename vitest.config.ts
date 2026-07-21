@@ -8,6 +8,6 @@ export default defineConfig({
 			enabled: false,
 		},
 		environment: 'node',
-		include: ['nodes/**/*.test.ts'],
+		include: ['tests/**/*.test.ts'],
 	},
 });

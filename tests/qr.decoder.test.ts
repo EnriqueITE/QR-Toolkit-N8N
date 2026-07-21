@@ -9,8 +9,8 @@ import {
 	renderPng,
 	type ErrorCorrectionLevel,
 	type QrMatrix,
-} from '../qr';
-import { MAX_PNG_COMPRESSED_BYTES, MAX_PNG_INPUT_BYTES } from '../qr/decoder';
+} from '../nodes/QrToolkit/qr';
+import { MAX_PNG_COMPRESSED_BYTES, MAX_PNG_INPUT_BYTES } from '../nodes/QrToolkit/qr/decoder';
 
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 

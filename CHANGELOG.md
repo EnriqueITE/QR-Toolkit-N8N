@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-21
+
+### Changed
+
+- Moved test sources outside the node directory so the official n8n community package scanner analyzes runtime code only.
+
 ## [0.1.1] - 2026-07-21
 
 ### Changed
@@ -29,6 +35,7 @@ All notable changes to this project are documented in this file. The format is b
 - QR reading for numeric, alphanumeric, and byte payloads, including UTF-8 ECI data.
 - Scoped npm package identity under `@cyberace/n8n-nodes-qr`.
 
-[Unreleased]: https://github.com/EnriqueITE/QR-Toolkit-N8N/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/EnriqueITE/QR-Toolkit-N8N/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/EnriqueITE/QR-Toolkit-N8N/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/EnriqueITE/QR-Toolkit-N8N/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/EnriqueITE/QR-Toolkit-N8N/releases/tag/v0.1.0

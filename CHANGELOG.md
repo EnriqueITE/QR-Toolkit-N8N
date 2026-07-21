@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-21
+
+### Changed
+
+- Migrated automated releases from a long-lived npm token to npm Trusted Publishing with GitHub Actions OIDC.
+
 ### Security
 
 - Bound PNG and Base64 data URL input before decoding and cap aggregate compressed image data to prevent worker memory exhaustion.
@@ -23,5 +29,6 @@ All notable changes to this project are documented in this file. The format is b
 - QR reading for numeric, alphanumeric, and byte payloads, including UTF-8 ECI data.
 - Scoped npm package identity under `@cyberace/n8n-nodes-qr`.
 
-[Unreleased]: https://github.com/EnriqueITE/QR-Toolkit-N8N/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/EnriqueITE/QR-Toolkit-N8N/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/EnriqueITE/QR-Toolkit-N8N/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/EnriqueITE/QR-Toolkit-N8N/releases/tag/v0.1.0

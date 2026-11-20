@@ -13,23 +13,17 @@ permissions:
 
 jobs:
   validate:
-    name: Node.js ${{ matrix.node-version }}
+    name: Build on Node.js 24 and test the installed node on Node.js 22
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version:
-          - 22
-          - 24
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Set up Node.js
+      - name: Set up Node.js for the development tools
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 24
           cache: npm
 
       - name: Use npm 11.6.1
@@ -38,26 +32,41 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Type-check
-        run: npm run typecheck
-
-      - name: Test
-        run: npm test
-
-      - name: Build
-        run: npm run build
-
-      - name: Run complete verification
+      - name: Check formatting, lint, types, tests and build
         run: npm run verify
 
-      - name: Inspect package contents
-        run: npm pack --dry-run
+      - name: Pack the node for installation
+        run: |
+          mkdir "$RUNNER_TEMP/qr-package"
+          npm pack --pack-destination "$RUNNER_TEMP/qr-package"
+
+      - name: Set up Node.js for the runtime check
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install and exercise the packed node with a Node.js 22 compatible n8n peer
+        run: |
+          mkdir "$RUNNER_TEMP/qr-consumer"
+          cd "$RUNNER_TEMP/qr-consumer"
+          npm init --yes
+          npm install --omit=dev n8n-workflow@2.30.2 "$RUNNER_TEMP"/qr-package/*.tgz
+          node "$GITHUB_WORKSPACE/tests/installed-package-smoke.mjs" "$PWD"
+
+  audit:
+    name: Audit the committed lockfile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: npm install --global npm@11.6.1
 
       - name: Audit production dependencies
-        run: npm audit --audit-level=high
+        run: npm audit --package-lock-only --omit=dev --audit-level=high
+
+      - name: Audit all dependencies, including development tools
+        run: npm audit --package-lock-only --include=dev --audit-level=high

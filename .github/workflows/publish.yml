@@ -66,8 +66,8 @@ jobs:
       - name: Inspect package contents
         run: npm pack --dry-run
 
-      - name: Audit production dependencies
-        run: npm audit --audit-level=high
+      - name: Audit all dependencies, including development tools
+        run: npm audit --include=dev --audit-level=high
 
       - name: Publish with provenance
         run: npm publish --provenance --access public

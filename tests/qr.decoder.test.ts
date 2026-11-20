@@ -1,5 +1,3 @@
-/* eslint-disable @n8n/community-nodes/no-restricted-imports -- Test-only dependencies are excluded from the published package. */
-
 import { PNG } from 'pngjs';
 import { describe, expect, it } from 'vitest';
 

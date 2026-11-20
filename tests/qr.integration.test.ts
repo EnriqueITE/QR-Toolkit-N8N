@@ -1,5 +1,3 @@
-/* eslint-disable @n8n/community-nodes/no-restricted-imports -- Dev-only decoder dependencies are excluded from the published package. */
-
 import jsQR from 'jsqr';
 import { PNG } from 'pngjs';
 import { describe, expect, it } from 'vitest';

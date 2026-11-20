@@ -1,5 +1,3 @@
-/* eslint-disable @n8n/community-nodes/no-restricted-imports -- Test-only dependency, excluded from the published package. */
-
 import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

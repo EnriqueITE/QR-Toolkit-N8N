@@ -11,12 +11,14 @@ Thank you for helping improve QR Toolkit. Contributions should keep the node sma
 
 ## Development setup
 
-Use Node.js 22 or newer and install the locked development dependencies:
+Use Node.js 24.15.0 or later in the 24.x line to install the locked development tools. The n8n CLI depends on a native module that requires Node.js 24. This requirement applies to developing the node, not to installing the published package.
 
 ```bash
 npm ci
 npm run dev
 ```
+
+CI also installs the packed node into a separate consumer project with Node.js 22 and a compatible `n8n-workflow` peer. It generates a QR and reads its content back without installing the development tools in that project.
 
 Keep the node interface, source comments intended for users, errors, tests, and documentation in English.
 

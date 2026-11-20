@@ -33,7 +33,8 @@ flowchart LR
 ## Requirements
 
 - n8n with community nodes enabled
-- Node.js 22 or newer when installing or developing the package manually
+- Node.js 22 or newer when installing the package manually
+- For development, see the [supported Node.js versions](CONTRIBUTING.md#development-setup).
 
 Until the package is verified by n8n, use it only on a self-hosted n8n instance that permits unverified community nodes. Installation availability on n8n Cloud depends on n8n verification and is not guaranteed.
 

@@ -60,16 +60,16 @@
 		]
 	},
 	"devDependencies": {
-		"@n8n/node-cli": "^0.39.3",
+		"@n8n/node-cli": "^0.57.4",
 		"@types/node": "24.0.15",
 		"@types/pngjs": "^6.0.5",
 		"eslint": "9.39.4",
 		"jsqr": "^1.4.0",
 		"pngjs": "^7.0.0",
 		"prettier": "3.8.3",
-		"release-it": "^20.2.1",
+		"release-it": "^21.1.2",
 		"typescript": "5.9.3",
-		"vitest": "^3.2.7"
+		"vitest": "^4.1.12"
 	},
 	"peerDependencies": {
 		"n8n-workflow": "*"

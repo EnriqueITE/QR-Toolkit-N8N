@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title">
+  <title id="title">QR Toolkit</title>
+  <rect width="256" height="256" rx="48" fill="#171a22" />
+  <g fill="none" stroke="#62e3c4" stroke-width="14">
+    <rect x="34" y="34" width="64" height="64" rx="8" />
+    <rect x="158" y="34" width="64" height="64" rx="8" />
+    <rect x="34" y="158" width="64" height="64" rx="8" />
+  </g>
+  <g fill="#f7fafc">
+    <rect x="55" y="55" width="22" height="22" rx="3" />
+    <rect x="179" y="55" width="22" height="22" rx="3" />
+    <rect x="55" y="179" width="22" height="22" rx="3" />
+    <path d="M122 34h14v28h-14zM108 62h14v22h-14zM122 98h28v14h-28zM108 112h14v28h-14zM136 126h14v14h-14zM164 112h14v28h-14zM192 112h30v14h-30zM178 140h14v14h-14zM206 140h16v28h-16zM108 154h28v14h-28zM136 168h14v28h-14zM108 196h14v26h-14zM150 196h28v14h-28zM178 168h14v28h-14zM192 210h30v12h-30z" />
+  </g>
+</svg>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#171b35">
+  <meta name="description" content="Genera y lee códigos QR localmente en n8n con QR Toolkit, un nodo comunitario de CYBERACE.">
+  <title>QR Toolkit — Códigos QR en n8n</title>
+  <link rel="icon" href="assets/qr-toolkit.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <link rel="alternate" hreflang="en" href="en/index.html">
+  <script defer src="ui.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Saltar al contenido</a>
+  <header><div class="wrap mast">
+    <a class="brand" href="#main"><img src="assets/qr-toolkit.svg" width="34" height="34" alt="">QR Toolkit</a>
+    <nav aria-label="Principal"><a href="#workflow">Flujo</a><a href="#install">Instalación</a><span class="langs"><a href="index.html" data-lang="es" lang="es" aria-current="page">ES</a><span aria-hidden="true">/</span><a href="en/index.html" data-lang="en" lang="en" >EN</a></span></nav>
+  </div></header>
+  <main id="main">
+    <section class="hero"><div class="wrap hero-grid">
+      <div class="hero-text"><p class="eyebrow dark"><i aria-hidden="true"></i>Nodo comunitario para n8n</p>
+      <h1>QR Toolkit<span>.</span></h1>
+      <p class="lede">De un dato a un QR. Del QR al siguiente nodo.</p>
+      <p class="intro">Genera códigos QR y lee su contenido dentro de tu instancia de n8n. El nodo procesa los datos localmente.</p>
+      <div class="actions"><a class="cta" href="#install">Instalar en n8n <span aria-hidden="true">↓</span></a><a class="secondary" href="https://github.com/EnriqueITE/QR-Toolkit-N8N">Código fuente <span aria-hidden="true">↗</span></a></div></div>
+      <figure class="lab"><div class="sample-sheet">
+        <div class="sample-label"><span>Salida del nodo</span><span>PNG</span></div>
+        <img class="sample-image" id="qr" src="assets/sample-url.png" width="396" height="396" alt="QR de ejemplo que codifica el valor indicado debajo">
+        <output id="payload" aria-live="polite">https://example.com</output>
+      </div><figcaption><div class="switches" role="group" aria-label="Cambiar ejemplo" hidden>
+      <button type="button" data-kind="url" aria-pressed="true">URL</button><button type="button" data-kind="text" aria-pressed="false">Texto</button><button type="button" data-kind="json" aria-pressed="false">JSON</button>
+      </div></figcaption></figure>
+    </div></section>
+    <section class="workflow wrap" id="workflow"><div class="section-head">
+      <div><p class="eyebrow">Flujo de ejemplo</p><h2>Generar y volver a leer.</h2></div>
+      <a class="text-link" href="assets/generate-and-read-qr-code.json" download>Descargar flujo para n8n <span aria-hidden="true">↓</span></a>
+    </div>
+    <ol class="steps">
+      <li><span class="marker" aria-hidden="true">01</span><h3>Inicia el flujo</h3><p>Importa el JSON del ejemplo en n8n. El disparador manual pone en marcha los dos nodos QR Toolkit.</p><code>Manual Trigger</code></li>
+      <li><span class="marker" aria-hidden="true">02</span><h3>Genera el PNG</h3><p>El primer nodo codifica la URL de ejemplo y entrega el archivo PNG en la propiedad binaria <code>data</code>.</p><code>Generate QR Code</code></li>
+      <li><span class="marker" aria-hidden="true">03</span><h3>Recupera el valor</h3><p>El segundo nodo lee ese mismo PNG. El contenido queda disponible para el siguiente paso en <code>qrContent</code>.</p><code>Read QR Code</code></li>
+    </ol>
+    <div class="formats"><div><h3>Formatos de salida</h3><p>PNG · SVG · Base64 PNG Data URL</p></div><div><h3>Entradas de lectura</h3><p>PNG binario o Data URL de un PNG. Usa imágenes nítidas con el código alineado a los ejes.</p></div></div>
+    </section>
+    <section class="install" id="install"><div class="wrap install-grid">
+      <div><p class="eyebrow">Instalación</p><h2>Añádelo a tu n8n.</h2><p>Para instancias autohospedadas con nodos comunitarios habilitados.</p></div>
+      <div class="instructions"><p>En <strong>Settings → Community Nodes → Install</strong>, introduce el nombre del paquete.</p>
+      <div class="package"><code>@cyberace/n8n-nodes-qr</code><button id="copy" type="button" hidden>Copiar</button></div><span id="copy-status" class="sr" role="status"></span>
+      <p>Completa la instalación y busca <strong>QR Toolkit</strong> en el selector de nodos.</p><a class="text-link" href="https://github.com/EnriqueITE/QR-Toolkit-N8N#installation">Guía de instalación <span aria-hidden="true">↗</span></a></div>
+    </div></section>
+  </main><footer><div class="wrap foot"><a href="https://enriqueite.github.io/">Enrique Serrano Aparicio <span aria-hidden="true">↗</span></a><a href="https://cyberace.tech/?utm_source=enriqueite.github.io&amp;utm_medium=referral&amp;utm_campaign=qr_toolkit&amp;utm_content=footer_es">CYBERACE <span aria-hidden="true">↗</span></a></div></footer>
+</body></html>
